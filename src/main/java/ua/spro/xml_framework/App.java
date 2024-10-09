@@ -1,4 +1,4 @@
-package ua.spro;
+package ua.spro.xml_framework;
 
 /**
  * Hello world!
