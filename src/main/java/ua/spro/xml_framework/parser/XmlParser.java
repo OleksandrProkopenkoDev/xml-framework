@@ -5,8 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
@@ -51,10 +51,15 @@ public class XmlParser {
       Class<?> clazz, XMLEvent event, Object instance, XMLEventReader eventReader) {
     StartElement startElement = event.asStartElement();
     String elementName = startElement.getName().getLocalPart();
-
+    //    log.info("Element name: " + elementName);
     // process attributes
     processAttributes(startElement, clazz, instance);
 
+    processElements(clazz, instance, eventReader, elementName);
+  }
+
+  private void processElements(
+      Class<?> clazz, Object instance, XMLEventReader eventReader, String elementName) {
     // find the matching field in the class
     List<Field> fields = ReflectionUtil.getAnnotatedFields(clazz, XmlElement.class);
 
@@ -71,6 +76,7 @@ public class XmlParser {
                 setFieldValue(instance, field, eventReader);
               } catch (IllegalAccessException | XMLStreamException e) {
                 log.severe(e.getMessage());
+                throw new RuntimeException("Error while parsing field: " + field.getName(), e);
               }
             });
   }
@@ -91,6 +97,7 @@ public class XmlParser {
                 field.set(instance, convertValue(field, attribute.getValue()));
               } catch (IllegalAccessException e) {
                 log.severe(e.getMessage());
+                throw new RuntimeException("Error while setting attribute " + attributeName, e);
               }
             }
           }
@@ -124,14 +131,15 @@ public class XmlParser {
       case "Float", "float" -> Float.parseFloat(value);
       case "Long", "long" -> Long.parseLong(value);
       case "BigDecimal" -> new BigDecimal(value);
-      case "Date" -> {
+      case "LocalDate" -> {
         try {
-          yield new SimpleDateFormat("yyyy-MM-dd").parse(value);
-        } catch (ParseException e) {
+          yield LocalDate.parse(value, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        } catch (Exception e) {
           log.severe(e.getMessage());
           yield null;
         }
       }
+
       default -> value;
     };
   }
