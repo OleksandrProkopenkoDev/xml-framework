@@ -1,0 +1,55 @@
+@startuml
+package "Annotations" {
+  annotation XmlRootElement {
+    - name: String
+  }
+  annotation XmlElement {
+    - name: String
+  }
+  annotation XmlAttribute {
+    - name: String
+  }
+  annotation XmlElementList {
+    - name: String
+  }
+}
+
+package "Core" {
+  class XmlParser {
+    + unmarshall(File xmlFile, Class clazz): Object
+    + unmarshallList(File xmlFile, Class clazz): List<Object>
+  }
+  class XmlSerializer {
+    + marshall(Object obj): String
+    + marshallList(List<Object> objList): String
+  }
+  class ReflectionUtil {
+    + getAnnotatedFields(Class clazz): List<Field>
+    + getAnnotationValue(Field field, Class annotationClass): String
+  }
+}
+
+package "Model" {
+  class Person {
+    - id: Integer
+    - firstName: String
+    - email: String
+    - age: Integer
+    - birthDate: Date
+    - isEmployed: Boolean
+    - salary: BigDecimal
+  }
+}
+
+XmlRootElement <|-- Person : "<<annotates>>"
+XmlElement <|-- Person : "<<annotates>>"
+XmlAttribute <|-- Person : "<<annotates>>"
+XmlElementList <|-- Person : "<<annotates>>"
+
+XmlParser --> ReflectionUtil : "uses"
+XmlSerializer --> ReflectionUtil : "uses"
+ReflectionUtil --> "*" XmlElement : "access"
+ReflectionUtil --> "*" XmlAttribute : "access"
+ReflectionUtil --> "*" XmlRootElement : "access"
+ReflectionUtil --> "*" XmlElementList : "access"
+@enduml
